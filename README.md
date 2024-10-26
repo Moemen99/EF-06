@@ -517,3 +517,123 @@ graph TD
 - Consider nullability of foreign keys
 - Use data annotations for explicit configuration
 - Navigation properties facilitate related data loading
+
+
+
+# One-to-Many Relationships in Entity Framework Core
+
+## Overview
+One-to-Many relationships in Entity Framework Core can be configured using three different approaches:
+1. Convention-based configuration
+2. Data Annotations
+3. Fluent API configuration
+
+This guide focuses on the Fluent API approach, which offers the most comprehensive configuration options.
+
+## Relationship Configuration Using Fluent API
+
+### Basic Configuration Patterns
+
+There are several ways to configure one-to-many relationships using Fluent API:
+
+```csharp
+// Starting from Department entity
+modelBuilder.Entity<Department>()
+    .HasMany(d => d.Employees)
+    .WithOne(e => e.Department);
+
+// With optional navigation property
+modelBuilder.Entity<Department>()
+    .HasMany(d => d.Employees)
+    .WithOne();
+
+// Starting from Employee entity
+modelBuilder.Entity<Employee>()
+    .HasOne(e => e.Department)
+    .WithMany(d => d.Employees);
+```
+
+> **Key Pattern**: Always start with `Has` and end with `With`
+
+## Advanced Configuration Options
+
+The Fluent API provides additional configuration capabilities beyond basic relationship mapping:
+
+```csharp
+modelBuilder.Entity<Department>()
+    .HasMany(d => d.Employees)
+    .WithOne()
+    .IsRequired(false)
+    .HasForeignKey(e => e.DepartmentId)
+    .OnDelete(DeleteBehavior.Cascade);
+```
+
+### Delete Behaviors
+
+| Behavior | Description |
+|----------|-------------|
+| `Cascade` | Automatically deletes related entities |
+| `SetNull` | Sets foreign key to null in related entities |
+| `Restrict` | Prevents deletion if related entities exist |
+
+## Relationship Visualization
+
+```mermaid
+classDiagram
+    class Department {
+        +int Id
+        +string Name
+        +ICollection<Employee> Employees
+    }
+    class Employee {
+        +int Id
+        +string Name
+        +int? DepartmentId
+        +Department Department
+    }
+    Department "1" --> "*" Employee : Has Many
+```
+
+## Important Notes
+
+1. **Migration Impact**: When modifying relationships:
+   - EF Core drops the existing relationship
+   - Creates new relationship with updated configuration
+   - May require data handling for existing records
+
+2. **Configuration Priority**:
+   - Fluent API configurations override Data Annotations
+   - Data Annotations override conventions
+   - Use Fluent API when you need:
+     - Complex relationship configuration
+     - Delete behavior customization
+     - Optional relationships
+     - Custom foreign key names
+
+3. **Best Practices**:
+   - Configure relationships in `OnModelCreating`
+   - Keep relationship configurations together for better maintainability
+   - Document any custom delete behaviors
+   - Consider impact on existing data when changing relationships
+
+## Configuration Location Options
+
+You can configure relationships in either:
+1. `OnModelCreating` method in DbContext
+2. Separate EntityTypeConfiguration classes
+
+### Example Using EntityTypeConfiguration
+
+```csharp
+public class DepartmentConfiguration : IEntityTypeConfiguration<Department>
+{
+    public void Configure(EntityTypeBuilder<Department> builder)
+    {
+        builder
+            .HasMany(d => d.Employees)
+            .WithOne(e => e.Department)
+            .HasForeignKey(e => e.DepartmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+```
