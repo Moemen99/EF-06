@@ -335,3 +335,185 @@ public class Department
 - Consider using HashSet for better performance
 - Navigation properties should be interface-based
 - Avoid tight coupling to specific collection types
+
+
+
+# Advanced Relationships and Foreign Keys in EF Core
+
+## Table of Contents
+- [Multiple Relationships](#multiple-relationships)
+- [Foreign Key Conventions](#foreign-key-conventions)
+- [Navigation Property Patterns](#navigation-property-patterns)
+- [Data Annotations](#data-annotations)
+- [Best Practices](#best-practices)
+
+## Multiple Relationships
+
+### Handling Multiple Relationships Between Classes
+```csharp
+public class Employee
+{
+    public int Id { get; set; }
+    
+    [InverseProperty("CurrentEmployees")]
+    public Department WorkDepartment { get; set; }
+    
+    [InverseProperty("FormerEmployees")]
+    public Department PreviousDepartment { get; set; }
+}
+
+public class Department
+{
+    public int DeptId { get; set; }
+    
+    [InverseProperty("WorkDepartment")]
+    public ICollection<Employee> CurrentEmployees { get; set; }
+    
+    [InverseProperty("PreviousDepartment")]
+    public ICollection<Employee> FormerEmployees { get; set; }
+}
+```
+
+## Foreign Key Conventions
+
+### Default Convention
+```mermaid
+graph LR
+    A[Entity Name] -->|+| B[Primary Key Name]
+    B --> C[Foreign Key Name]
+    A -->|Example| D[Department]
+    B -->|Example| E[DeptId]
+    C -->|Example| F[DepartmentDeptId]
+    style A fill:#f9f,stroke:#333
+    style B fill:#9f9,stroke:#333
+    style C fill:#ff9,stroke:#333
+```
+
+### Custom Foreign Key Naming
+```csharp
+public class Employee
+{
+    public int Id { get; set; }
+    
+    // Custom foreign key property name
+    [ForeignKey("Department")]
+    public int? DepartmentId { get; set; }
+    
+    public Department Department { get; set; }
+}
+```
+
+## Navigation Property Patterns
+
+### Relationship Types Based on Navigation Properties
+
+| Configuration | Resulting Relationship |
+|--------------|------------------------|
+| Many-side only | One-to-Many |
+| One-side only | One-to-One |
+| Both sides | Based on property type |
+| No navigation | One-to-One (default) |
+
+### Examples
+```csharp
+// One-to-Many (minimal configuration)
+public class Employee
+{
+    public Department Department { get; set; }  // Many side only
+}
+
+// One-to-One (minimal configuration)
+public class Department
+{
+    public Employee Manager { get; set; }  // One side only
+}
+```
+
+## Data Annotations
+
+### Common Annotations
+
+```csharp
+public class Employee
+{
+    // Specify foreign key for navigation property
+    [ForeignKey("DepartmentId")]
+    public Department Department { get; set; }
+    
+    // Custom foreign key property name
+    public int? DepartmentId { get; set; }
+    
+    // Multiple relationships
+    [InverseProperty("CurrentEmployees")]
+    public Department CurrentDepartment { get; set; }
+}
+```
+
+### Annotation Usage Table
+
+| Annotation | Purpose | Target |
+|------------|---------|--------|
+| `[ForeignKey]` | Specify FK property name | Navigation Property |
+| `[InverseProperty]` | Define inverse relationship | Navigation Property |
+| `[Required]` | Make FK non-nullable | Foreign Key Property |
+
+## Best Practices
+
+1. **Foreign Key Properties**
+```csharp
+public class Employee
+{
+    // Explicit FK property for better control
+    public int? DepartmentId { get; set; }
+    public Department Department { get; set; }
+}
+```
+
+2. **Relationship Configuration**
+```csharp
+// Clear relationship definition
+public class Department
+{
+    public int DeptId { get; set; }
+    public string Name { get; set; }
+    
+    // Collection navigation property
+    public ICollection<Employee> Employees { get; set; } 
+        = new HashSet<Employee>();
+}
+```
+
+3. **Multiple Relationships**
+```csharp
+// Use meaningful names for relationships
+public class Employee
+{
+    [InverseProperty(nameof(Department.CurrentEmployees))]
+    public Department CurrentDepartment { get; set; }
+    
+    [InverseProperty(nameof(Department.FormerEmployees))]
+    public Department FormerDepartment { get; set; }
+}
+```
+
+## Database Considerations
+
+```mermaid
+graph TD
+    A[Navigation Properties] -->|Not in DB| B[Code Only]
+    A -->|Purpose| C[Load Related Data]
+    C -->|Generates| D[Foreign Keys]
+    D -->|In DB| E[Physical Relationship]
+    style A fill:#f9f,stroke:#333
+    style B fill:#9f9,stroke:#333
+    style C fill:#ff9,stroke:#333
+    style D fill:#9ff,stroke:#333
+```
+
+## Notes
+- Navigation properties exist only in code
+- EF Core generates appropriate foreign keys
+- Default conventions can be overridden
+- Consider nullability of foreign keys
+- Use data annotations for explicit configuration
+- Navigation properties facilitate related data loading
