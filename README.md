@@ -282,11 +282,29 @@ public class Employee
 ### Convention-Based Naming
 ```mermaid
 graph LR
-    A[Entity Name] -->|+| B[Primary Key Name]
-    B --> C[Foreign Key Name]
-    style A fill:#f9f,stroke:#333
-    style B fill:#9f9,stroke:#333
-    style C fill:#ff9,stroke:#333
+    A[Entity Name] -->|[Step 1]| B[Primary Key Name]
+    B -->|[Step 2]| C[Foreign Key Name]
+    
+    style A fill:#ff69b4,stroke:#333
+    style B fill:#90ee90,stroke:#333
+    style C fill:#ffffe0,stroke:#333
+    
+    %% Add labels below nodes
+    classDef labelStyle font-size:12px
+    class A,B,C labelStyle
+    
+    %% Add examples as notes
+    note1[Example: Department]
+    note2[Example: DeptId]
+    note3[Example: DepartmentDeptId]
+    
+    A --> note1
+    B --> note2
+    C --> note3
+    
+    style note1 fill:#ff69b4,stroke:#333,stroke-dasharray: 5 5
+    style note2 fill:#90ee90,stroke:#333,stroke-dasharray: 5 5
+    style note3 fill:#ffffe0,stroke:#333,stroke-dasharray: 5 5
 ```
 
 ## Collection Initialization Examples
